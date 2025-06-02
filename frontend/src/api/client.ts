@@ -1,6 +1,6 @@
 import type { MediaUploadResponse, MediaType, ConfigResponse, AppConfig, StreamingUploadResponse, StreamStatus } from '@/types'
 
-const API_BASE_URL = 'http://localhost:8000'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
 export const uploadMedia = (file: File, onProgressCallback?: (percentage: number) => void): Promise<MediaUploadResponse> => {
   const isImage = file.type.startsWith('image/')
