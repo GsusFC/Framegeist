@@ -20,10 +20,26 @@ export const App = () => {
         setConfig(response.config)
       } else {
         console.error('Failed to load config:', response.message)
+        // Use default config if backend not available
+        setDefaultConfig()
       }
     } catch (error) {
       console.error('Failed to load config:', error)
+      // Use default config if backend not available  
+      setDefaultConfig()
     }
+  }
+
+  const setDefaultConfig = () => {
+    setConfig({
+      image_max_size: 5 * 1024 * 1024, // 5MB
+      video_max_size: 10 * 1024 * 1024, // 10MB
+      ascii_width: 80,
+      default_fps: 10,
+      ascii_chars: "@%#*+=-:. ",
+      background_color: "#000000",
+      text_color: "#00ff00"
+    })
   }
 
   const handleConfigUpdate = (newConfig: AppConfig) => {
