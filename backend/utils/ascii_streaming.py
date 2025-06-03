@@ -1,6 +1,7 @@
 import io
 import subprocess
 import logging
+import threading
 from pathlib import Path
 from typing import Generator, Optional
 from PIL import Image
@@ -92,6 +93,15 @@ class AsciiStreamer:
                 stderr=subprocess.PIPE,
                 bufsize=0
             )
+
+            # Drain stderr in a background thread to avoid deadlocks
+            def _log_stderr(pipe):
+                for line in iter(pipe.readline, b""):
+                    logger.error(f"ffmpeg: {line.decode().rstrip()}")
+
+            stderr_thread = threading.Thread(target=_log_stderr, args=(process.stderr,))
+            stderr_thread.daemon = True
+            stderr_thread.start()
             
             frame_count = 0
             buffer = b''
@@ -124,11 +134,11 @@ class AsciiStreamer:
             
             # Wait for process to complete
             process.wait()
+            stderr_thread.join()
             
             if process.returncode != 0:
-                stderr = process.stderr.read().decode()
-                logger.error(f"FFmpeg error: {stderr}")
-                raise RuntimeError(f"FFmpeg failed with return code {process.returncode}: {stderr}")
+                logger.error(f"FFmpeg exited with code {process.returncode}")
+                raise RuntimeError(f"FFmpeg failed with return code {process.returncode}")
             
             logger.info(f"Successfully streamed {frame_count} frames from {video_path}")
             
